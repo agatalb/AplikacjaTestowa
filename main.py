@@ -26,5 +26,6 @@ def counter():
 
 @app.post("/patient")
 def create_patient(patient: Patient):
+	id_patient = app.patient_id
 	counter()
-	return {"id": app.patient_id, "patient": {"name": patient.name.upper(), "surname": patient.surename.upper()}}
+	return {"id": id_patient, "patient": {"name": patient.name.upper(), "surname": patient.surename.upper()}}
