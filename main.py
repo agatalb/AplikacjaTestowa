@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -34,5 +34,6 @@ def create_patient(patient: Patient):
 @app.get('/patient/{pk}')
 def read_patient(pk: int):
 	if not pk in app.patient_db.keys():
-		return 404
+		raise HTTPException(
+			status_code=204)
 	return app.patient_db[pk]["patient"]
