@@ -4,7 +4,7 @@ from pydantic import BaseModel
 app = FastAPI()
 
 app.patient_id: int = 0
-# app.patient_db: dict 
+app.patient_db: dict = {} 
 
 @app.get("/")
 def root():
@@ -28,4 +28,11 @@ def counter():
 def create_patient(patient: Patient):
 	id_patient = app.patient_id
 	counter()
+	app.patient_db[id_patient] = {"patient" : {"name": patient.name.upper(), "surname": patient.surename.upper()}}
 	return {"id": id_patient, "patient": {"name": patient.name.upper(), "surname": patient.surename.upper()}}
+
+@app.get('/patient/{pk}')
+def read_patient(pk: int):
+	if not pk in app.patient_db.keys():
+		return 404
+	return app.patient_db[pk]["patient"]
