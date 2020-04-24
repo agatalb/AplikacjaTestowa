@@ -9,6 +9,10 @@ app.patient_db: dict = {}
 @app.get("/")
 def root():
 	return {"message": "Hello World during the coronavirus pandemic!"}
+
+@app.get("/welcome")
+def root2():
+	return {"message": "Co u Ciebie słychać? Co nowego?"}
     
 @app.api_route("/method", methods = ["GET", "POST", "DELETE", "PUT"])  
 
