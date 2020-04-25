@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException, Cookie, Depends, status
+from fastapi import FastAPI, Request, HTTPException, Cookie, Depends, status, Response
 from starlette.responses import RedirectResponse
 from pydantic import BaseModel
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -14,6 +14,7 @@ app.secret_key = "gOoMDQ9oFM9LqC3noS9lgfHibuYNR2BaUOKbEfftpjAtSi8s2ejnKNYBjeQSo7
 app.users={"tRudnY": "PaC13Nt"}
 app.sessions={}
 security = HTTPBasic()
+app.session_tokens = []
 
 @app.get("/")
 def root():
@@ -23,11 +24,6 @@ def root():
 def root2():
 	return {"message": "Co u Ciebie słychać? Co nowego?"}
 
-
-@app.post("/cookie-and-object/")
-def create_cookie(response: Response):
-    response.set_cookie(key="fakesession", value="fake-cookie-session-value")
-    return {"message": "Come to the dark side, we have cookies"}
 
 @app.post("/login")
 def get_current_user(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
