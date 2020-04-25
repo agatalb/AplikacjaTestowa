@@ -1,10 +1,19 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Cookie, Depends, status
+from starlette.responses import RedirectResponse
 from pydantic import BaseModel
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import secrets
+from hashlib import sha256
 
 app = FastAPI()
 
 app.patient_id: int = 0
 app.patient_db: dict = {} 
+
+app.secret_key = "gOoMDQ9oFM9LqC3noS9lgfHibuYNR2BaUOKbEfftpjAtSi8s2ejnKNYBjeQSo7qq"
+app.users={"tRudnY": "PaC13Nt"}
+app.sessions={}
+security = HTTPBasic()
 
 @app.get("/")
 def root():
@@ -13,7 +22,28 @@ def root():
 @app.get("/welcome")
 def root2():
 	return {"message": "Co u Ciebie słychać? Co nowego?"}
-    
+
+
+@app.post("/cookie-and-object/")
+def create_cookie(response: Response):
+    response.set_cookie(key="fakesession", value="fake-cookie-session-value")
+    return {"message": "Come to the dark side, we have cookies"}
+
+@app.post("/login")
+def get_current_user(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = secrets.compare_digest(credentials.username, "trudnY")
+    correct_password = secrets.compare_digest(credentials.password, "PaC13Nt")
+    if not (correct_username and correct_password):
+        raise HTTPException(
+        	status_code=401, detail="Incorrect email or password")
+    session_token = sha256(bytes(f"{credentials.username}{credentials.password}{app.secret_key}", encoding='utf8')).hexdigest()
+    app.session_tokens.append(session_token)
+    response.set_cookie(key="session_token", value=session_token)
+    response.headers["Location"] = "/welcome"
+    response.status_code = status.HTTP_302_FOUND 
+
+
+
 @app.api_route("/method", methods = ["GET", "POST", "DELETE", "PUT"])  
 
 
