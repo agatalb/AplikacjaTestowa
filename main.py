@@ -25,6 +25,7 @@ def root2():
 	if session_token not in app.session_tokens:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return MESSAGE_UNAUTHORIZED
+	response.status_code = status.HTTP_302_FOUND
 	return {"message": "Co u Ciebie słychać? Co nowego?"}
 
 
@@ -74,6 +75,7 @@ def create_patient(patient: Patient):
 	counter()
 	app.patient_db[id_patient] = {"patient" : {"name": patient.name.upper(), "surname": patient.surename.upper()}}
 	return {"id": id_patient, "patient": {"name": patient.name.upper(), "surname": patient.surename.upper()}}
+	response.status_code = status.HTTP_302_FOUND
 
 @app.get('/patient/{pk}')
 def read_patient(pk: int):
@@ -83,4 +85,6 @@ def read_patient(pk: int):
 	if not pk in app.patient_db.keys():
 		raise HTTPException(
 			status_code=204)
+	response.status_code = status.HTTP_302_FOUND
 	return app.patient_db[pk]["patient"]
+	response.status_code = status.HTTP_302_FOUND
