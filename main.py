@@ -39,7 +39,7 @@ def get_current_user(response: Response, credentials: HTTPBasicCredentials = Dep
     response.status_code = status.HTTP_302_FOUND 
 
 @app.post("/logout")
-def logout(*, response: Response, session_token: str = Cookie(None)):
+def logout(response: Response, session_token: str = Cookie(None)):
 	if session_token not in app.session_tokens:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return MESSAGE_UNAUTHORIZED
@@ -65,6 +65,7 @@ def create_patient(patient: Patient):
 	if session_token not in app.session_tokens:
 		raise HTTPException(status_code=401, detail="Unathorised")
 	response.status_code = status.HTTP_302_FOUND
+	response.set_cookie(key="session_token", value=session_token)
 	id_patient = app.patient_id
 	counter()
 	app.patient_db[id_patient] = {"patient" : {"name": patient.name.upper(), "surname": patient.surename.upper()}}
