@@ -25,7 +25,7 @@ def root2():
 	return {"message": "Co u Ciebie słychać? Co nowego?"}
 
 
-@app.post("/login")
+@app.get("/login")
 def get_current_user(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
     correct_username = secrets.compare_digest(credentials.username, "trudnY")
     correct_password = secrets.compare_digest(credentials.password, "PaC13Nt")
@@ -38,11 +38,15 @@ def get_current_user(response: Response, credentials: HTTPBasicCredentials = Dep
     response.headers["Location"] = "/welcome"
     response.status_code = status.HTTP_302_FOUND 
 
-
+@app.post("/logout")
+def logout(*, response: Response, session_token: str = Cookie(None)):
+	if session_token not in app.session_tokens:
+		raise HTTPException(status_code=401, detail="Unathorised")
+	app.session_tokens.remove(session_token)
+	response = RedirectResponse(url = "/")
+	return response
 
 @app.api_route("/method", methods = ["GET", "POST", "DELETE", "PUT"])  
-
-
 def fun(request: Request):
 	return {"method":request.method}
 
@@ -55,7 +59,10 @@ def counter():
 	app.patient_id += 1
 
 @app.post("/patient")
+
 def create_patient(patient: Patient):
+	if session_token not in app.session_tokens:
+		raise HTTPException(status_code=401, detail="Unathorised")
 	id_patient = app.patient_id
 	counter()
 	app.patient_db[id_patient] = {"patient" : {"name": patient.name.upper(), "surname": patient.surename.upper()}}
@@ -63,6 +70,8 @@ def create_patient(patient: Patient):
 
 @app.get('/patient/{pk}')
 def read_patient(pk: int):
+	if session_token not in app.session_tokens:
+		raise HTTPException(status_code=401, detail="Unathorised")
 	if not pk in app.patient_db.keys():
 		raise HTTPException(
 			status_code=204)
