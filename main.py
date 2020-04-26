@@ -64,6 +64,7 @@ def counter():
 def create_patient(patient: Patient):
 	if session_token not in app.session_tokens:
 		raise HTTPException(status_code=401, detail="Unathorised")
+	response.status_code = status.HTTP_302_FOUND
 	id_patient = app.patient_id
 	counter()
 	app.patient_db[id_patient] = {"patient" : {"name": patient.name.upper(), "surname": patient.surename.upper()}}
@@ -73,6 +74,7 @@ def create_patient(patient: Patient):
 def read_patient(pk: int):
 	if session_token not in app.session_tokens:
 		raise HTTPException(status_code=401, detail="Unathorised")
+	response.status_code = status.HTTP_302_FOUND
 	if not pk in app.patient_db.keys():
 		raise HTTPException(
 			status_code=204)
