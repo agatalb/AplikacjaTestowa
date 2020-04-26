@@ -42,6 +42,7 @@ def get_current_user(response: Response, credentials: HTTPBasicCredentials = Dep
 def logout(*, response: Response, session_token: str = Cookie(None)):
 	if session_token not in app.session_tokens:
 		raise HTTPException(status_code=401, detail="Unathorised")
+	response.status_code = status.HTTP_302_FOUND
 	app.session_tokens.remove(session_token)
 	response = RedirectResponse(url = "/")
 	return response
