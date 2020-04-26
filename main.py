@@ -44,8 +44,7 @@ def logout(*, response: Response, session_token: str = Cookie(None)):
 		raise HTTPException(status_code=401, detail="Unathorised")
 	response.status_code = status.HTTP_302_FOUND
 	app.session_tokens.remove(session_token)
-	response = RedirectResponse(url = "/")
-	return response
+	return RedirectResponse(url = "/")
 
 @app.api_route("/method", methods = ["GET", "POST", "DELETE", "PUT"])  
 def fun(request: Request):
