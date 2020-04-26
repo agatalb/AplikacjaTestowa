@@ -22,6 +22,9 @@ def root():
 
 @app.get("/welcome")
 def root2():
+	if session_token not in app.session_tokens:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return MESSAGE_UNAUTHORIZED
 	return {"message": "Co u Ciebie słychać? Co nowego?"}
 
 
@@ -43,9 +46,10 @@ def logout(response: Response, session_token: str = Cookie(None)):
 	if session_token not in app.session_tokens:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return MESSAGE_UNAUTHORIZED
-	response.status_code = status.HTTP_302_FOUND
+	response.headers["Location"] = "/"
+    response.status_code = status.HTTP_302_FOUND
 	app.session_tokens.remove(session_token)
-	return RedirectResponse(url = "/")
+	
 
 @app.api_route("/method", methods = ["GET", "POST", "DELETE", "PUT"])  
 def fun(request: Request):
