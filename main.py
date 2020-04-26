@@ -1,154 +1,90 @@
-# main.py
-######################################################################
-######################################################################
-#####################       ASSIGNMENT 1       #######################
-######################################################################
-######################################################################
-
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Cookie, Depends, status, Response
+from starlette.responses import RedirectResponse
 from pydantic import BaseModel
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import secrets
+from hashlib import sha256
 
 app = FastAPI()
-app.ID = 0
-app.patients = {}
-app.session_tokens = []
-app.secret_key = "very constant and random secret, best 64 characters, here it is."
 
-### TASK 1 ###########################################################
+app.patient_id: int = 0
+app.patient_db: dict = {} 
+
+app.secret_key = "gOoMDQ9oFM9LqC3noS9lgfHibuYNR2BaUOKbEfftpjAtSi8s2ejnKNYBjeQSo7qq"
+app.users={"tRudnY": "PaC13Nt"}
+app.sessions={}
+security = HTTPBasic()
+app.session_tokens = []
 
 @app.get("/")
 def root():
-    return {"message": "Hello World during the coronavirus pandemic!"}
-
-### TASK 2 ###########################################################
-
-@app.get("/method")
-def root():
-    return {"method": "GET"}
-
-@app.put("/method")
-def root():
-    return {"method": "PUT"}
-
-@app.post("/method")
-def root():
-    return {"method": "POST"}
-
-@app.delete("/method")
-def root():
-    return {"method": "DELETE"}
-
-### TASK 3 ###########################################################
-
-class PatientRq(BaseModel):
-	name: str
-	surname: str
-
-class PatientResp(BaseModel):
-	id: int
-	patient: dict
-
-#@app.post("/patient", response_model=PatientResp)
-def receive_patient(rq: PatientRq):
-	if app.ID not in app.patients.keys():
-		app.patients[app.ID] = rq.dict()
-		app.ID += 1
-	return PatientResp(id=app.ID, patient=rq.dict())
-
-### TASK 4 ###########################################################
-	
-#@app.get("/patient/{pk}")
-async def return_patient(pk: int):
-    if pk in app.patients.keys():
-    	return app.patients[pk]
-    else:
-    	raise HTTPException(status_code=204, detail="Item not found")
-
-######################################################################
-######################################################################
-#####################       ASSIGNMENT 3       #######################
-######################################################################
-######################################################################
-
-
-### TASK 1 & 4 #######################################################
-
-from fastapi.templating import Jinja2Templates
-from fastapi import Cookie, Request
-
-templates = Jinja2Templates(directory="templates")
+	return {"message": "Hello World during the coronavirus pandemic!"}
 
 @app.get("/welcome")
-def do_welcome(request: Request, session_token: str = Cookie(None)):
+def root2():
 	if session_token not in app.session_tokens:
-		raise HTTPException(status_code=401, detail="Unathorised")
-	return templates.TemplateResponse("item.html", {"request": request, "user": "trudnY"})
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return MESSAGE_UNAUTHORIZED
+	response.status_code = status.HTTP_302_FOUND
+	return {"message": "Co u Ciebie słychać? Co nowego?"}
 
 
-### TASK 2 ###########################################################
-from hashlib import sha256
-from starlette.responses import RedirectResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi import Depends, Response, status
-import secrets
-
-security = HTTPBasic()
-
-
-@app.post("/login")
+@app.get("/login")
 def get_current_user(response: Response, credentials: HTTPBasicCredentials = Depends(security)):
     correct_username = secrets.compare_digest(credentials.username, "trudnY")
     correct_password = secrets.compare_digest(credentials.password, "PaC13Nt")
     if not (correct_username and correct_password):
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
+        raise HTTPException(
+        	status_code=401, detail="Incorrect email or password")
     session_token = sha256(bytes(f"{credentials.username}{credentials.password}{app.secret_key}", encoding='utf8')).hexdigest()
     app.session_tokens.append(session_token)
     response.set_cookie(key="session_token", value=session_token)
     response.headers["Location"] = "/welcome"
     response.status_code = status.HTTP_302_FOUND 
 
-### TASK 3 ###########################################################
-
 @app.post("/logout")
-def logout(*, response: Response, session_token: str = Cookie(None)):
+def logout(response: Response, session_token: str = Cookie(None)):
 	if session_token not in app.session_tokens:
-		raise HTTPException(status_code=401, detail="Unathorised")
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return MESSAGE_UNAUTHORIZED
+	response.headers["Location"] = "/"
+    response.status_code = status.HTTP_302_FOUND
 	app.session_tokens.remove(session_token)
-	return RedirectResponse("/")
-
-### TASK 5 ###########################################################
-@app.post("/patient")
-def add_patient(response: Response, patient: PatientRq, session_token: str = Cookie(None)):
-	if session_token not in app.session_tokens:
-		raise HTTPException(status_code=401, detail="Unathorised")
-	if app.ID not in app.patients.keys():
-		app.patients[app.ID] = patient.dict()
-		app.ID += 1
-	response.set_cookie(key="session_token", value=session_token)
-	response.headers["Location"] = f"/patient/{app.ID-1}"
-	response.status_code = status.HTTP_302_FOUND
-
-@app.get("/patient")
-def display_patients(response: Response, session_token: str = Cookie(None)):
-	if session_token not in app.session_tokens:
-		raise HTTPException(status_code=401, detail="Unathorised")
-	return app.patients
-    
-
-@app.get("/patient/{id}")
-def display_patient(response: Response, id: int, session_token: str = Cookie(None)):
-	if session_token not in app.session_tokens: 
-		raise HTTPException(status_code=401, detail="Unathorised")
-	response.set_cookie(key="session_token", value=session_token)
-	if id in app.patients.keys():
-		return app.patients[id]
 	
 
-@app.delete("/patient/{id}")
-def delete_patient(response: Response, id: int, session_token: str = Cookie(None)):
-	if session_token not in app.session_tokens: 
+@app.api_route("/method", methods = ["GET", "POST", "DELETE", "PUT"])  
+def fun(request: Request):
+	return {"method":request.method}
+
+
+class Patient(BaseModel):
+	name: str
+	surename: str
+
+def counter():
+	app.patient_id += 1
+
+@app.post("/patient")
+
+def create_patient(patient: Patient):
+	if session_token not in app.session_tokens:
 		raise HTTPException(status_code=401, detail="Unathorised")
-	app.patients.pop(id, None)		
-	response.status_code = status.HTTP_204_NO_CONTENT
-#
-#
+	response.status_code = status.HTTP_302_FOUND
+	response.set_cookie(key="session_token", value=session_token)
+	id_patient = app.patient_id
+	counter()
+	app.patient_db[id_patient] = {"patient" : {"name": patient.name.upper(), "surname": patient.surename.upper()}}
+	return {"id": id_patient, "patient": {"name": patient.name.upper(), "surname": patient.surename.upper()}}
+	response.status_code = status.HTTP_302_FOUND
+
+@app.get('/patient/{pk}')
+def read_patient(pk: int):
+	if session_token not in app.session_tokens:
+		raise HTTPException(status_code=401, detail="Unathorised")
+	response.status_code = status.HTTP_302_FOUND
+	if not pk in app.patient_db.keys():
+		raise HTTPException(
+			status_code=204)
+	response.status_code = status.HTTP_302_FOUND
+	return app.patient_db[pk]["patient"]
+	response.status_code = status.HTTP_302_FOUND
