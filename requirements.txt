@@ -25,7 +25,7 @@ packaging==20.3
 pluggy==0.13.1
 promise==2.3
 py==1.8.1
-pydantic==1.4
+pydantic==1.6.2
 pyparsing==2.4.6
 pytest==5.4.1
 python-multipart==0.0.5
